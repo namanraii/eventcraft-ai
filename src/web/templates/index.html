@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>EventCraft AI — celebration planner</title>
+  <meta name="description" content="Plan a wedding, birthday, or community event with a budget that adds up, a timeline from the date you have, and a vendor checklist.">
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/css/styles.css">
+  <script src="/static/js/app.js" defer></script>
+</head>
+<body data-vertical="wedding">
+  <a class="skip-link" href="#main-planner">Skip to planner</a>
+  <header class="masthead">
+    <div class="brand">
+      <svg class="mark" viewBox="0 0 48 48" aria-hidden="true">
+        <rect x="3" y="3" width="42" height="42" fill="none" stroke="currentColor" stroke-width="3"></rect>
+        <path d="M14 32 V16 H30" fill="none" stroke="currentColor" stroke-width="3"></path>
+        <circle cx="33" cy="32" r="3" fill="currentColor"></circle>
+      </svg>
+      <div>
+        <p class="wordmark">EventCraft AI</p>
+        <p class="tagline">Budgets that add up. Timelines that start from the date you actually have.</p>
+      </div>
+    </div>
+    <p id="engine-status" role="status">Checking the planning engine.</p>
+  </header>
+
+  <main id="main-planner">
+    <section class="setup" aria-labelledby="persona-heading">
+      <div class="section-head">
+        <h1 id="persona-heading">What are you planning?</h1>
+        <p>Three planners share one set of engines. The wedding architect is the flagship. Birthdays and community events use the same money, date, and vendor logic with different rules.</p>
+      </div>
+      <div id="persona-group" class="persona-grid" role="radiogroup" aria-labelledby="persona-heading"></div>
+      <p id="persona-error" class="alert" role="alert" hidden></p>
+    </section>
+
+    <section class="setup" aria-labelledby="brief-heading">
+      <div class="section-head">
+        <h2 id="brief-heading">The brief</h2>
+        <p>Numbers are calculated here, not guessed by a model. Priority sliders move share toward a category. They never spend the emergency buffer.</p>
+      </div>
+
+      <form id="planner-form" novalidate>
+        <div class="field">
+          <label for="sample">Load a sample brief</label>
+          <select id="sample">
+            <option value="wedding">Wedding in Jaipur, eight months out</option>
+            <option value="wedding-sprint">Wedding, ten days out</option>
+            <option value="birthday">30th birthday in Bengaluru</option>
+            <option value="community">Neighbourhood mela in Pune</option>
+          </select>
+        </div>
+
+        <fieldset>
+          <legend>Event</legend>
+          <div class="form-grid">
+            <div class="field">
+              <label for="event-name">Event name <span class="req">required</span></label>
+              <input id="event-name" name="event_name" required minlength="2" maxlength="120" autocomplete="organization">
+            </div>
+            <div class="field">
+              <label for="host-names" id="host-label">Hosts</label>
+              <input id="host-names" name="host_names" maxlength="160" autocomplete="name">
+            </div>
+            <div class="field">
+              <label for="budget">Total budget in rupees <span class="req">required</span></label>
+              <input id="budget" name="total_budget" type="number" inputmode="numeric" required min="1000" max="100000000" step="1000">
+            </div>
+            <div class="field">
+              <label for="guests" id="guests-label">Guest count <span class="req">required</span></label>
+              <input id="guests" name="guest_count" type="number" inputmode="numeric" required min="5" max="50000" step="1" aria-describedby="guests-help">
+              <p id="guests-help" class="help">People you expect to feed.</p>
+            </div>
+            <div class="field">
+              <label for="event-date">Event date <span class="req">required</span></label>
+              <input id="event-date" name="event_date" type="date" required>
+            </div>
+            <div class="field">
+              <label for="city">City <span class="req">required</span></label>
+              <input id="city" name="city" required minlength="2" maxlength="80" autocomplete="address-level2">
+            </div>
+            <div class="field">
+              <label for="location-tier">Location tier</label>
+              <select id="location-tier" name="location_tier">
+                <option value="metro">Tier 1 metro</option>
+                <option value="city">Tier 2 city</option>
+                <option value="destination">Destination</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="setting">Setting</label>
+              <select id="setting" name="setting">
+                <option value="indoor">Indoor</option>
+                <option value="outdoor">Outdoor</option>
+                <option value="mixed">Mixed</option>
+              </select>
+            </div>
+            <div class="field" id="age-field" hidden>
+              <label for="age-group">Age group</label>
+              <select id="age-group" name="age_group">
+                <option value="">Not specified</option>
+                <option value="kids">Children</option>
+                <option value="teens">Teens</option>
+                <option value="milestone_21">21st</option>
+                <option value="milestone_30">30th</option>
+                <option value="milestone_50">50th</option>
+                <option value="general">General</option>
+              </select>
+            </div>
+            <div class="field span-2">
+              <label for="vibe">Vibe or style</label>
+              <input id="vibe" name="vibe" maxlength="200">
+            </div>
+            <div class="field span-2">
+              <label for="culture">Cultural notes</label>
+              <textarea id="culture" name="cultural_preferences" maxlength="500"></textarea>
+            </div>
+            <div class="field span-2">
+              <label for="diet">Dietary notes</label>
+              <textarea id="diet" name="dietary_notes" maxlength="500"></textarea>
+            </div>
+            <div class="field span-2">
+              <label for="notes">Anything else the planner should respect</label>
+              <textarea id="notes" name="custom_notes" maxlength="1000"></textarea>
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Priorities</legend>
+          <p id="priority-help" class="help">1 pulls spend away from a category, 3 keeps the baseline, 5 pulls spend toward it. The buffer is not on a slider.</p>
+          <div id="priority-fields" class="priority-grid"></div>
+        </fieldset>
+
+        <div id="form-error" class="alert" role="alert" hidden></div>
+        <div class="actions">
+          <button type="submit" id="generate">Generate plan</button>
+        </div>
+      </form>
+    </section>
+
+    <section id="plan-results" aria-labelledby="results-heading">
+      <h2 id="results-heading" tabindex="-1">Your plan</h2>
+      <p id="results-empty">Generate a plan to see the budget, the critical path, the vendor checklist, and a few ideas that match this brief.</p>
+      <div id="results-body" hidden>
+        <div id="summary" class="summary"></div>
+        <p id="planner-note" class="note"></p>
+        <div class="toolbar">
+          <div id="tablist" class="tablist" role="tablist" aria-label="Plan sections">
+            <button type="button" class="tab" id="tab-budget" role="tab" aria-controls="panel-budget" aria-selected="true" tabindex="0" data-panel="budget">Budget</button>
+            <button type="button" class="tab" id="tab-timeline" role="tab" aria-controls="panel-timeline" aria-selected="false" tabindex="-1" data-panel="timeline">Timeline</button>
+            <button type="button" class="tab" id="tab-checklist" role="tab" aria-controls="panel-checklist" aria-selected="false" tabindex="-1" data-panel="checklist">Vendors</button>
+            <button type="button" class="tab" id="tab-ideas" role="tab" aria-controls="panel-ideas" aria-selected="false" tabindex="-1" data-panel="ideas">Ideas</button>
+          </div>
+          <div class="toolbar-actions no-print">
+            <button type="button" class="secondary" id="copy-plan">Copy summary</button>
+            <button type="button" class="secondary" id="print-plan">Print</button>
+          </div>
+        </div>
+        <div id="panel-budget" class="tabpanel" role="tabpanel" aria-labelledby="tab-budget" tabindex="0"></div>
+        <div id="panel-timeline" class="tabpanel" role="tabpanel" aria-labelledby="tab-timeline" tabindex="0" hidden></div>
+        <div id="panel-checklist" class="tabpanel" role="tabpanel" aria-labelledby="tab-checklist" tabindex="0" hidden></div>
+        <div id="panel-ideas" class="tabpanel" role="tabpanel" aria-labelledby="tab-ideas" tabindex="0" hidden></div>
+        <details class="assumptions">
+          <summary>Assumptions in this plan</summary>
+          <ul id="assumptions"></ul>
+        </details>
+      </div>
+    </section>
+  </main>
+
+  <p id="status-announcer" class="sr-only" role="status" aria-live="polite"></p>
+
+  <footer>
+    <p>Plans are calculated for this session and are not stored on the server. Amounts are planning figures in INR, not vendor quotes.</p>
+    <p>EventCraft AI {{ app_version }}</p>
+  </footer>
+  <noscript>
+    <p class="alert">This page needs JavaScript to run the planner. The same engine is available at <a href="/docs">/docs</a>.</p>
+  </noscript>
+</body>
+</html>
