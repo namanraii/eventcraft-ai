@@ -8,9 +8,13 @@ critical work forward. A longer runway keeps the full phase plan.
 from __future__ import annotations
 
 from datetime import date, timedelta
+from typing import Literal
 
 from src.domain.personas import EmergencyTemplate, MilestoneTemplate, get_persona
 from src.domain.schemas import EventRequest, TimelineMilestone, TimelinePlan
+
+TimelineMode = Literal["emergency_sprint", "compressed", "phased"]
+MilestoneStatus = Literal["overdue", "due_soon", "scheduled", "event_day"]
 
 
 class TimelineMilestoneGenerator:
@@ -33,6 +37,7 @@ class TimelineMilestoneGenerator:
         days_remaining = (request.event_date - today).days
         warnings: list[str] = []
 
+        mode: TimelineMode
         if days_remaining < 14:
             mode = "emergency_sprint"
             milestones = [
@@ -52,10 +57,14 @@ class TimelineMilestoneGenerator:
             )
         else:
             mode = "phased"
-            milestones = [_from_phased(template, today, request.event_date) for template in persona.milestones]
+            milestones = [
+                _from_phased(template, today, request.event_date)
+                for template in persona.milestones
+            ]
             milestones.sort(key=lambda item: (item.due_date, item.title))
             headline = (
-                f"Phased plan: {days_remaining} days across concept, vendors, guest logistics, and show day."
+                f"Phased plan: {days_remaining} days across concept, vendors, "
+                "guest logistics, and show day."
             )
 
         if days_remaining < 0:
@@ -67,7 +76,8 @@ class TimelineMilestoneGenerator:
             )
         if request.event_type.value == "wedding" and days_remaining < 30:
             warnings.append(
-                "A wedding inside 30 days cannot keep every ritual. The sprint keeps the ceremony, the meal, and a cue sheet."
+                "A wedding inside 30 days cannot keep every ritual. The sprint keeps the ceremony, "
+                "the meal, and a cue sheet."
             )
 
         phases: list[str] = []
@@ -77,7 +87,7 @@ class TimelineMilestoneGenerator:
         return TimelinePlan(
             event_date=request.event_date,
             days_remaining=days_remaining,
-            mode=mode,  # type: ignore[arg-type]
+            mode=mode,
             headline=headline,
             phases=phases,
             milestones=milestones,
@@ -85,7 +95,7 @@ class TimelineMilestoneGenerator:
         )
 
 
-def _status(due: date, today: date, event_date: date) -> str:
+def _status(due: date, today: date, event_date: date) -> MilestoneStatus:
     """Classify a due date relative to today and the event."""
     if due == event_date:
         return "event_day"
@@ -113,14 +123,18 @@ def _from_phased(template: MilestoneTemplate, today: date, event_date: date) -> 
         title=template.title,
         phase=template.phase,
         due_date=due,
-        status=_status(due, today, event_date),  # type: ignore[arg-type]
+        status=_status(due, today, event_date),
         owner=template.owner,
         description=template.description,
         critical=template.critical,
     )
 
 
-def _from_emergency(template: EmergencyTemplate, today: date, event_date: date) -> TimelineMilestone:
+def _from_emergency(
+    template: EmergencyTemplate,
+    today: date,
+    event_date: date,
+) -> TimelineMilestone:
     """Place a sprint task on today or on the event, then clamp it."""
     anchor = today if template.anchor == "start" else event_date
     due = _clamp(anchor + timedelta(days=template.offset_days), today, event_date)
@@ -129,7 +143,7 @@ def _from_emergency(template: EmergencyTemplate, today: date, event_date: date) 
         title=template.title,
         phase=template.phase,
         due_date=due,
-        status=_status(due, today, event_date),  # type: ignore[arg-type]
+        status=_status(due, today, event_date),
         owner=template.owner,
         description=template.description,
         critical=template.critical,
@@ -168,7 +182,10 @@ def _compress(
                 due_date=due,
                 status="due_soon" if due >= today else "overdue",
                 owner=template.owner,
-                description="This would normally have started earlier. Do it now. " + template.description,
+                description=(
+                    "This would normally have started earlier. Do it now. "
+                    + template.description
+                ),
                 critical=True,
             )
         )

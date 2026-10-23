@@ -34,7 +34,15 @@ class BudgetAllocationEngine:
         weights, notes = _adjusted_weights(persona, request)
         amounts = split_amount(request.total_budget, weights)
         amounts = _repair_sum(amounts, request.total_budget, persona.contingency_key)
-        return _render(persona, request.total_budget, request.guest_count, request.location_tier, amounts, notes, [])
+        return _render(
+            persona,
+            request.total_budget,
+            request.guest_count,
+            request.location_tier,
+            amounts,
+            notes,
+            [],
+        )
 
     def rebalance(self, request: RebalanceRequest) -> BudgetPlan:
         """Refit a plan after one category changes.
@@ -58,7 +66,9 @@ class BudgetAllocationEngine:
         floor = _floor_amount(total, persona.contingency_floor)
         contingency_key = persona.contingency_key
         critical = {category.key for category in persona.categories if category.critical}
-        flex_keys = [category.key for category in persona.categories if category.key != contingency_key]
+        flex_keys = [
+            category.key for category in persona.categories if category.key != contingency_key
+        ]
         minimum = max(int(round(total * 0.02)), 0)
         labels = {category.key: category.label for category in persona.categories}
         warnings: list[str] = []
@@ -71,7 +81,8 @@ class BudgetAllocationEngine:
             if target < floor:
                 target = floor
                 warnings.append(
-                    f"The emergency buffer stays at least ₹{_inr(floor)} so a surprise bill does not wipe the plan."
+                    f"The emergency buffer stays at least ₹{_inr(floor)} "
+                    "so a surprise bill does not wipe the plan."
                 )
             if minimum and target + minimum * len(flex_keys) > total:
                 minimum = 0
@@ -85,7 +96,10 @@ class BudgetAllocationEngine:
                 minimum,
             )
             amounts = {**distributed, contingency_key: target}
-            notes.append(f"You set {labels[changed]} to ₹{_inr(target)}. The other lines were refit around it.")
+            notes.append(
+                f"You set {labels[changed]} to ₹{_inr(target)}. "
+                "The other lines were refit around it."
+            )
         else:
             others = [key for key in flex_keys if key != changed]
             current_buffer = request.allocations.get(contingency_key, floor)
@@ -115,9 +129,11 @@ class BudgetAllocationEngine:
                 "The emergency buffer stays protected."
             )
 
-        amounts = _repair_sum(amounts, total, contingency_key if changed != contingency_key else changed)
+        sink = contingency_key if changed != contingency_key else changed
+        amounts = _repair_sum(amounts, total, sink)
         amounts = _enforce_floor(amounts, contingency_key, floor, critical)
-        amounts = _repair_sum(amounts, total, changed if changed != contingency_key else _largest_other(amounts, contingency_key))
+        other = changed if changed != contingency_key else _largest_other(amounts, contingency_key)
+        amounts = _repair_sum(amounts, total, other)
         if amounts[contingency_key] < floor:
             amounts = _enforce_floor(amounts, contingency_key, floor, critical)
             amounts = _repair_sum(amounts, total, _largest_other(amounts, contingency_key))
@@ -200,12 +216,24 @@ def distribute(
     return {key: shared[key] + minimum for key in keys}
 
 
-def _adjusted_weights(persona: Persona, request: EventRequest) -> tuple[dict[str, float], list[str]]:
+def _adjusted_weights(
+    persona: Persona, request: EventRequest
+) -> tuple[dict[str, float], list[str]]:
     """Fold tier, setting, age, and priority into weights that sum to 1."""
     notes = [f"Started from the {persona.name} baseline."]
     weights = {category.key: category.base_weight for category in persona.categories}
-    _apply_shift(weights, persona.tier_shifts.get(request.location_tier, {}), persona.tier_shift_notes.get(request.location_tier), notes)
-    _apply_shift(weights, persona.setting_shifts.get(request.setting, {}), persona.setting_shift_notes.get(request.setting), notes)
+    _apply_shift(
+        weights,
+        persona.tier_shifts.get(request.location_tier, {}),
+        persona.tier_shift_notes.get(request.location_tier),
+        notes,
+    )
+    _apply_shift(
+        weights,
+        persona.setting_shifts.get(request.setting, {}),
+        persona.setting_shift_notes.get(request.setting),
+        notes,
+    )
     if request.event_type.value == "birthday" and request.age_group is not None:
         _apply_shift(
             weights,
@@ -224,7 +252,10 @@ def _adjusted_weights(persona: Persona, request: EventRequest) -> tuple[dict[str
         raw[key] = weights[key] * (score / 3.0)
         if key in request.priorities and score != 3:
             direction = "up" if score > 3 else "down"
-            notes.append(f"{labels[key]} is set to {score} of 5, so its share moves {direction} from the baseline.")
+            notes.append(
+                f"{labels[key]} is set to {score} of 5, "
+                f"so its share moves {direction} from the baseline."
+            )
     flex_target = 1.0 - contingency
     raw_sum = sum(raw.values()) or 1.0
     for key in flex_keys:
@@ -248,7 +279,9 @@ def _apply_shift(
             return
         proposed[key] = proposed[key] + change
     if any(value < 0.01 for value in proposed.values()):
-        notes.append("A context shift was skipped because a category would have dropped below 1 percent.")
+        notes.append(
+            "A context shift was skipped because a category would have dropped below 1 percent."
+        )
         return
     if abs(sum(proposed.values()) - 1.0) > 0.02:
         return
@@ -301,7 +334,8 @@ def _render(
     elif per_guest_amount is not None and per_guest_amount > threshold * 3:
         notes.append(
             f"{per_guest_label} is ₹{_inr(per_guest_amount)} per guest, well above the "
-            f"{tier.value} planning floor of ₹{_inr(threshold)}. You have room to add a comfort, not a second theme."
+            f"{tier.value} planning floor of ₹{_inr(threshold)}. "
+            "You have room to add a comfort, not a second theme."
         )
     return BudgetPlan(
         total_budget=total,
@@ -333,7 +367,11 @@ def _repair_sum(amounts: dict[str, int], total: int, sink: str) -> dict[str, int
     if repaired[sink] < 0:
         debt = -repaired[sink]
         repaired[sink] = 0
-        donors = sorted((key for key in repaired if key != sink), key=lambda key: repaired[key], reverse=True)
+        donors = sorted(
+            (key for key in repaired if key != sink),
+            key=lambda key: repaired[key],
+            reverse=True,
+        )
         for key in donors:
             take = min(debt, repaired[key])
             repaired[key] -= take
@@ -364,7 +402,8 @@ def _enforce_floor(
         gap -= take
         if gap == 0:
             break
-    repaired[contingency_key] = repaired.get(contingency_key, 0) + (floor - repaired.get(contingency_key, 0) - gap)
+    current = repaired.get(contingency_key, 0)
+    repaired[contingency_key] = current + (floor - current - gap)
     return repaired
 
 

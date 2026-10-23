@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from datetime import date, timedelta
 
-from src.domain.personas import VendorTemplate, get_persona
+from src.domain.personas import Priority, VendorTemplate, get_persona
 from src.domain.schemas import ChecklistPlan, EventRequest, VendorChecklistItem
 
 
@@ -66,7 +66,7 @@ def _matches(vendor: VendorTemplate, haystack: str) -> bool:
 def _score(vendor: VendorTemplate, event_date: date, today: date) -> VendorChecklistItem:
     """Attach a book-by date and a plain-language hint."""
     book_by = event_date - timedelta(days=vendor.lead_time_days)
-    priority = vendor.priority
+    priority: Priority = vendor.priority
     if book_by < today:
         hint = "Lead time has passed. Call today and ask what can still be delivered."
         if priority in {"high", "medium"}:
@@ -79,7 +79,7 @@ def _score(vendor: VendorTemplate, event_date: date, today: date) -> VendorCheck
         id=vendor.id,
         vendor_role=vendor.vendor_role,
         category_key=vendor.category_key,
-        priority=priority,  # type: ignore[arg-type]
+        priority=priority,
         lead_time_days=vendor.lead_time_days,
         deposit_percent=vendor.deposit_percent,
         book_by=book_by,

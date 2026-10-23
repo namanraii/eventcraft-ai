@@ -9,8 +9,12 @@ with different rules.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Literal
 
 from src.domain.schemas import AgeGroup, EventVertical, LocationTier, Setting
+
+Priority = Literal["critical", "high", "medium", "low"]
+Effort = Literal["low", "medium", "high"]
 
 
 @dataclass(frozen=True)
@@ -63,7 +67,7 @@ class VendorTemplate:
     id: str
     vendor_role: str
     category_key: str
-    priority: str
+    priority: Priority
     lead_time_days: int
     deposit_percent: int
     contract_clauses: tuple[str, ...]
@@ -78,7 +82,7 @@ class IdeaTemplate:
     title: str
     summary: str
     why_it_fits: str
-    effort: str
+    effort: Effort
     palette: tuple[str, ...]
     signature_experience: str
     sustainability_tip: str
@@ -176,7 +180,8 @@ def _wedding() -> Persona:
             "Write the brief and the guest ceiling",
             "Concept and venue",
             300,
-            "Agree the rituals you will actually do, a guest ceiling, and the budget you will not cross.",
+            "Agree the rituals you will actually do, a guest ceiling, and the budget you will not "
+            "cross.",
             "Couple and families",
             True,
         ),
@@ -194,7 +199,8 @@ def _wedding() -> Persona:
             "Book photo and video",
             "Vendors and contracts",
             200,
-            "Lock ceremony hours first. Add pre-events only if the quote still fits the photo line.",
+            "Lock ceremony hours first. Add pre-events only if the quote still fits the photo "
+            "line.",
             "Couple",
             True,
         ),
@@ -203,7 +209,8 @@ def _wedding() -> Persona:
             "Tasting and caterer contract",
             "Vendors and contracts",
             160,
-            "Taste the menu, separate allergen and Jain lines if needed, and freeze the per-plate rule.",
+            "Taste the menu, separate allergen and Jain lines if needed, and freeze the per-plate "
+            "rule.",
             "Couple",
             True,
         ),
@@ -230,7 +237,8 @@ def _wedding() -> Persona:
             "Send invitations",
             "Guest logistics",
             80,
-            "Include a map, the meal type, and a realistic RSVP date. Digital is fine if elders have a phone path.",
+            "Include a map, the meal type, and a realistic RSVP date. Digital is fine if elders "
+            "have a phone path.",
             "Families",
             False,
         ),
@@ -266,7 +274,8 @@ def _wedding() -> Persona:
             "Rehearse the cue sheet",
             "Run of show",
             7,
-            "Walk the procession, the meal service, and the exit. Name one person who can make a decision on the day.",
+            "Walk the procession, the meal service, and the exit. Name one person who can make a "
+            "decision on the day.",
             "Couple",
             True,
         ),
@@ -284,7 +293,8 @@ def _wedding() -> Persona:
             "Ceremony day cue sheet",
             "Run of show",
             0,
-            "Run the day from the one-page sheet. The buffer exists so you do not renegotiate prices at the gate.",
+            "Run the day from the one-page sheet. The buffer exists so you do not renegotiate "
+            "prices at the gate.",
             "Couple",
             True,
         ),
@@ -306,7 +316,8 @@ def _wedding() -> Persona:
             "Emergency sprint",
             "start",
             0,
-            "One venue, home, or courtyard. Get the overtime rate and the backup power in writing today.",
+            "One venue, home, or courtyard. Get the overtime rate and the backup power in writing "
+            "today.",
             "Couple",
             True,
         ),
@@ -326,7 +337,8 @@ def _wedding() -> Persona:
             "Emergency sprint",
             "start",
             1,
-            "Hire photo for the ceremony window. Skip a full-day film crew if the date is this close.",
+            "Hire photo for the ceremony window. Skip a full-day film crew if the date is this "
+            "close.",
             "Couple",
             False,
         ),
@@ -360,9 +372,11 @@ def _wedding() -> Persona:
             180,
             40,
             (
-                "Cancellation keeps a dated schedule: a shift to a new date is better than a forfeiture inside 30 days.",
+                "Cancellation keeps a dated schedule: a shift to a new date is better than a "
+                "forfeiture inside 30 days.",
                 "Overtime has an hourly cap written on the work order, including music curfew.",
-                "Power backup, drinking water, and a rain cover are included or priced as line items.",
+                "Power backup, drinking water, and a rain cover are included or priced as line "
+                "items.",
             ),
             "Visit once at the same hour as the ceremony so you hear the real ambient noise.",
         ),
@@ -374,8 +388,10 @@ def _wedding() -> Persona:
             120,
             30,
             (
-                "The final bill uses the higher of the guaranteed count and the plates served, locked 72 hours prior.",
-                "Allergen and special-diet counters have their own serving staff so lines do not cross.",
+                "The final bill uses the higher of the guaranteed count and the plates served, "
+                "locked 72 hours prior.",
+                "Allergen and special-diet counters have their own serving staff so lines do not "
+                "cross.",
                 "Leftover packing is allowed for the family, or the contract says it is not.",
             ),
             "Pay for a tasting. A menu you have not eaten is a guess.",
@@ -388,7 +404,8 @@ def _wedding() -> Persona:
             150,
             30,
             (
-                "Delivery days for edited films and for the full set of photos are dates, not 'soon'.",
+                "Delivery days for edited films and for the full set of photos are dates, not "
+                "'soon'.",
                 "A second shooter is included only for the hours you listed.",
                 "You can print and share guest photos. The vendor keeps portfolio rights.",
             ),
@@ -402,7 +419,8 @@ def _wedding() -> Persona:
             90,
             40,
             (
-                "The drawing is the scope. Extra florals on the day are a new quote, not a surprise line.",
+                "The drawing is the scope. Extra florals on the day are a new quote, not a "
+                "surprise line.",
                 "Installation and breakdown hours are inside the venue's access window.",
                 "Open flame, cold pyro, and hanging loads need the venue's written yes.",
             ),
@@ -416,7 +434,8 @@ def _wedding() -> Persona:
             90,
             50,
             (
-                "Alteration deadlines are on the receipt. A missed fitting is not the tailor's overtime gift.",
+                "Alteration deadlines are on the receipt. A missed fitting is not the tailor's "
+                "overtime gift.",
                 "Duplicate jewellery or a backup outfit is named if the main piece is borrowed.",
             ),
             "Schedule the last fitting at least four days before travel.",
@@ -429,8 +448,10 @@ def _wedding() -> Persona:
             90,
             30,
             (
-                "The room block release date is before your RSVP close, with a named attrition percentage.",
-                "Airport or station transfers list the vehicle count, not an open-ended 'as required'.",
+                "The room block release date is before your RSVP close, with a named attrition "
+                "percentage.",
+                "Airport or station transfers list the vehicle count, not an open-ended 'as "
+                "required'.",
             ),
             "Hold rooms for elders first. Everyone else can book the published rate.",
         ),
@@ -442,7 +463,8 @@ def _wedding() -> Persona:
             60,
             30,
             (
-                "Sound ends at the venue curfew. Overtime is a pre-priced hour, not a negotiation at midnight.",
+                "Sound ends at the venue curfew. Overtime is a pre-priced hour, not a negotiation "
+                "at midnight.",
                 "The repertoire for rituals is approved. The dance set is a separate block.",
             ),
             "One emcee who has read the family names is worth more than a louder speaker.",
@@ -455,7 +477,8 @@ def _wedding() -> Persona:
             60,
             20,
             (
-                "The ritual duration is an estimate in minutes so the venue overtime is predictable.",
+                "The ritual duration is an estimate in minutes so the venue overtime is "
+                "predictable.",
                 "Language and the order of rites are agreed in writing.",
             ),
             "Ask what the family must arrange: fire pit, mandap access, or a quiet side room.",
@@ -468,7 +491,8 @@ def _wedding() -> Persona:
             45,
             50,
             (
-                "The proof you signed is the print. Spelling corrections after print are a new job.",
+                "The proof you signed is the print. Spelling corrections after print are a new "
+                "job.",
             ),
             "Put the meal type and the RSVP date on the card itself.",
         ),
@@ -480,7 +504,8 @@ def _wedding() -> Persona:
             45,
             30,
             (
-                "The artist count matches the number of guests you want finished before the ceremony, not a vague team.",
+                "The artist count matches the number of guests you want finished before the "
+                "ceremony, not a vague team.",
                 "Stain-darkening time is scheduled before portraits.",
             ),
             "Included because the brief mentions mehendi.",
@@ -503,29 +528,37 @@ def _wedding() -> Persona:
     ideas = (
         IdeaTemplate(
             "Courtyard ceremony, short baraat",
-            "Hold the rites in one courtyard and keep the procession to a few hundred metres so transport does not eat the hospitality line.",
-            "{city} can carry a courtyard wedding for {guests} guests without a second venue. {host} stay with the guests instead of spending the hour in traffic.",
+            "Hold the rites in one courtyard and keep the procession to a few hundred metres so "
+            "transport does not eat the hospitality line.",
+            "{city} can carry a courtyard wedding for {guests} guests without a second venue. "
+            "{host} stay with the guests instead of spending the hour in traffic.",
             "medium",
             ("sandstone", "marigold", "ivory"),
             "A shehnai or nadaswaram at the gate, then silence for the vows.",
-            "Skip a foam-flower hall. Use one seasonal garland on the mandap and family textiles for the rest.",
+            "Skip a foam-flower hall. Use one seasonal garland on the mandap and family textiles "
+            "for the rest.",
             keywords=("rajasthani", "courtyard", "baraat", "shehnai", "jaipur"),
             settings=("outdoor", "mixed"),
         ),
         IdeaTemplate(
             "Two kitchen lines, one dining hall",
-            "Run the main vegetarian meal and a separate Jain or allergen line with different ladles, boards, and staff.",
-            "The dietary note is specific, and {guests} guests is large enough that a shared spoon will fail.",
+            "Run the main vegetarian meal and a separate Jain or allergen line with different "
+            "ladles, boards, and staff.",
+            "The dietary note is specific, and {guests} guests is large enough that a shared spoon "
+            "will fail.",
             "medium",
             ("banana leaf", "brass", "white"),
             "A millet or regional thali that elders recognise, plus a smaller plate for children.",
-            "Plan portions from RSVPs, not from a 10 percent over-guess. Donate sealed surplus the same night.",
+            "Plan portions from RSVPs, not from a 10 percent over-guess. Donate sealed surplus the "
+            "same night.",
             keywords=("jain", "vegetarian", "vegan", "allergen", "onion"),
         ),
         IdeaTemplate(
             "Heirloom textile mandap",
-            "Build the canopy from family sarees and one florist focal, and spend the decor cut on guest comfort instead.",
-            "You marked decor as a lower priority. A textile mandap still photographs as a wedding in {city}.",
+            "Build the canopy from family sarees and one florist focal, and spend the decor cut on "
+            "guest comfort instead.",
+            "You marked decor as a lower priority. A textile mandap still photographs as a wedding "
+            "in {city}.",
             "low",
             ("indigo", "madder", "unbleached cotton"),
             "Each corner held by a textile with a one-line story in the program.",
@@ -534,8 +567,10 @@ def _wedding() -> Persona:
         ),
         IdeaTemplate(
             "Daylight rites, seated lunch",
-            "Start late morning, finish the meal before evening traffic, and skip a night party if the families are tired of them.",
-            "A daytime plan in {city} keeps overtime and generator fuel off the invoice for {guests} guests.",
+            "Start late morning, finish the meal before evening traffic, and skip a night party if "
+            "the families are tired of them.",
+            "A daytime plan in {city} keeps overtime and generator fuel off the invoice for "
+            "{guests} guests.",
             "low",
             ("warm white", "leaf green", "clay"),
             "A family playlist for one hour after lunch, then a clear end.",
@@ -655,7 +690,8 @@ def _birthday() -> Persona:
             "Lock the theme, the list, and the budget",
             "Theme and guests",
             28,
-            "Decide who it is for. A 30th supper and a children's party do not share a vendor list.",
+            "Decide who it is for. A 30th supper and a children's party do not share a vendor "
+            "list.",
             "Host",
             True,
         ),
@@ -664,7 +700,8 @@ def _birthday() -> Persona:
             "Hold the room if this is a milestone",
             "Theme and guests",
             90,
-            "Used when the date is still far out. A milestone party loses its room to weddings if you wait.",
+            "Used when the date is still far out. A milestone party loses its room to weddings if "
+            "you wait.",
             "Host",
             False,
         ),
@@ -682,7 +719,8 @@ def _birthday() -> Persona:
             "Book the one experience",
             "Bookings",
             18,
-            "One hired activity is enough. A second activity usually splits the room and the budget.",
+            "One hired activity is enough. A second activity usually splits the room and the "
+            "budget.",
             "Host",
             True,
         ),
@@ -709,7 +747,8 @@ def _birthday() -> Persona:
             "Decor, invites, and the playlist",
             "Week of",
             7,
-            "Send the address, the end time, and any access note. Keep decor to what you can store.",
+            "Send the address, the end time, and any access note. Keep decor to what you can "
+            "store.",
             "Host",
             False,
         ),
@@ -736,7 +775,8 @@ def _birthday() -> Persona:
             "Host the party",
             "Day of",
             0,
-            "Start on time and end when you said you would. Neighbours and children both need that.",
+            "Start on time and end when you said you would. Neighbours and children both need "
+            "that.",
             "Host",
             True,
         ),
@@ -815,7 +855,8 @@ def _birthday() -> Persona:
             14,
             30,
             (
-                "Portion counts match the guest list, with a written note for gluten-free or eggless plates.",
+                "Portion counts match the guest list, with a written note for gluten-free or "
+                "eggless plates.",
                 "Staffing is included, or you have named who will serve.",
             ),
             "Label allergens on the buffet. Do not rely on a verbal warning.",
@@ -831,7 +872,8 @@ def _birthday() -> Persona:
                 "Servings, flavour, and the delivery window are the whole order.",
                 "A nut-free or eggless requirement is written, not assumed from a phone call.",
             ),
-            "Ask what happens if the courier is late. A backup dessert from a nearby shop is a fair plan.",
+            "Ask what happens if the courier is late. A backup dessert from a nearby shop is a "
+            "fair plan.",
         ),
         VendorTemplate(
             "experience",
@@ -841,7 +883,8 @@ def _birthday() -> Persona:
             14,
             30,
             (
-                "The set length and the age fit are written. A children's set is not a nightclub set.",
+                "The set length and the age fit are written. A children's set is not a nightclub "
+                "set.",
                 "Power, space, and a quiet backup if the activity fails are agreed.",
             ),
             "One experience. If the quote doubles the entertainment line, cut the decor instead.",
@@ -854,7 +897,8 @@ def _birthday() -> Persona:
             10,
             40,
             (
-                "Rental items come back the next morning. Balloons and plastic backdrops are a choice, not a default.",
+                "Rental items come back the next morning. Balloons and plastic backdrops are a "
+                "choice, not a default.",
             ),
             "Decorate one corner the camera will see.",
         ),
@@ -886,8 +930,10 @@ def _birthday() -> Persona:
     ideas = (
         IdeaTemplate(
             "Parallel quiet room",
-            "Run a short, loud activity in one space and a quiet making table in another so children can leave the noise.",
-            "A kids' gathering for {guests} people works better with an exit ramp from the excitement. Host: {host}.",
+            "Run a short, loud activity in one space and a quiet making table in another so "
+            "children can leave the noise.",
+            "A kids' gathering for {guests} people works better with an exit ramp from the "
+            "excitement. Host: {host}.",
             "medium",
             ("sunflower", "sky", "paper white"),
             "Twenty-minute sets, then food, then a clear end before bedtime.",
@@ -897,8 +943,10 @@ def _birthday() -> Persona:
         ),
         IdeaTemplate(
             "Activity over a spectacle",
-            "Give teens one thing to do together — a tournament, a kitchen shift, a playlist they built — and almost no stage decor.",
-            "{event_name} lands better when the guests own part of it. {city} has plenty of rooms; the activity is the scarce piece.",
+            "Give teens one thing to do together — a tournament, a kitchen shift, a playlist they "
+            "built — and almost no stage decor.",
+            "{event_name} lands better when the guests own part of it. {city} has plenty of rooms; "
+            "the activity is the scarce piece.",
             "medium",
             ("ink", "electric blue", "concrete"),
             "A shared playlist with a volume cap and a last song.",
@@ -907,19 +955,24 @@ def _birthday() -> Persona:
         ),
         IdeaTemplate(
             "Supper club, one toast",
-            "A seated meal, a family toast before service, and a playlist after. No ceremony unless the notes ask for one.",
-            "This fits a milestone dinner in {city} for {guests} guests, with gluten-free plates marked before anyone sits.",
+            "A seated meal, a family toast before service, and a playlist after. No ceremony "
+            "unless the notes ask for one.",
+            "This fits a milestone dinner in {city} for {guests} guests, with gluten-free plates "
+            "marked before anyone sits.",
             "medium",
             ("oxblood", "cream", "brass"),
             "One speech, three minutes, then the meal.",
-            "Choose a restaurant or caterer that already cooks to order so you do not build a new kitchen.",
+            "Choose a restaurant or caterer that already cooks to order so you do not build a new "
+            "kitchen.",
             keywords=("supper", "dinner", "toast", "retro"),
             age_groups=("milestone_21", "milestone_30", "general"),
         ),
         IdeaTemplate(
             "Memory table, earlier end",
-            "A table of photos and stories, seats with backs for everyone, and an end time that lets people travel home.",
-            "A 50th in {city} is a gathering of energy levels. Comfort spends better than a late band.",
+            "A table of photos and stories, seats with backs for everyone, and an end time that "
+            "lets people travel home.",
+            "A 50th in {city} is a gathering of energy levels. Comfort spends better than a late "
+            "band.",
             "low",
             ("sage", "warm grey", "gold line"),
             "Short open-mic stories with a host who will gently stop them.",
@@ -929,8 +982,10 @@ def _birthday() -> Persona:
         ),
         IdeaTemplate(
             "Home courtyard hour",
-            "Use the house, hire the meal, and put the money into the cake and one musician or a game.",
-            "{guests} guests can fit a home plan when the venue line would otherwise erase the experience.",
+            "Use the house, hire the meal, and put the money into the cake and one musician or a "
+            "game.",
+            "{guests} guests can fit a home plan when the venue line would otherwise erase the "
+            "experience.",
             "low",
             ("terracotta", "white", "green"),
             "Cake at a stated time, then tea.",
@@ -958,18 +1013,26 @@ def _birthday() -> Persona:
         },
         tier_shift_notes={
             LocationTier.DESTINATION: (
-                "A destination birthday moves 2 points from invites and favors into the room and the meal."
+                "A destination birthday moves 2 points from invites and favors into the room and "
+                "the meal."
             ),
         },
         age_shifts={
-            AgeGroup.KIDS: {"entertainment": 0.04, "cake_dessert": 0.02, "photo_video": -0.03, "invites_favors": -0.03},
+            AgeGroup.KIDS: {
+                "entertainment": 0.04,
+                "cake_dessert": 0.02,
+                "photo_video": -0.03,
+                "invites_favors": -0.03,
+            },
             AgeGroup.TEENS: {"entertainment": 0.05, "decor": -0.03, "photo_video": -0.02},
             AgeGroup.MILESTONE_50: {"venue_catering": 0.04, "entertainment": -0.04},
         },
         age_shift_notes={
-            AgeGroup.KIDS: "A children's party moves weight into the activity and the cake, and away from photo and favors.",
+            AgeGroup.KIDS: "A children's party moves weight into the activity and the cake, and "
+                "away from photo and favors.",
             AgeGroup.TEENS: "A teen party funds the activity and trims decor and photo.",
-            AgeGroup.MILESTONE_50: "A 50th moves weight from entertainment into seating, food, and a calmer room.",
+            AgeGroup.MILESTONE_50: "A 50th moves weight from entertainment into seating, food, and "
+                "a calmer room.",
         },
         setting_shifts={},
         setting_shift_notes={},
@@ -978,7 +1041,8 @@ def _birthday() -> Persona:
         vendors=vendors,
         ideas=ideas,
         system_brief=(
-            "You are planning a birthday. Match the age. One signature experience is better than a theme park of ideas. "
+            "You are planning a birthday. Match the age. One signature experience is better than a "
+            "theme park of ideas. "
             "Do not add alcohol service unless the notes ask for it."
         ),
     )
@@ -1041,7 +1105,8 @@ def _community() -> Persona:
             0.14,
             True,
             False,
-            "Municipal events overrun on power, water, and last-minute compliance. The reserve is larger on purpose.",
+            "Municipal events overrun on power, water, and last-minute compliance. The reserve is "
+            "larger on purpose.",
         ),
     )
     milestones = (
@@ -1050,7 +1115,8 @@ def _community() -> Persona:
             "Fix footfall, budget, and the sponsor gap",
             "Permissions and site",
             90,
-            "Write the maximum footfall you will allow. Sponsorship reduces the gap; it does not raise the cap.",
+            "Write the maximum footfall you will allow. Sponsorship reduces the gap; it does not "
+            "raise the cap.",
             "Committee",
             True,
         ),
@@ -1086,7 +1152,8 @@ def _community() -> Persona:
             "Safety plan, medical, and insurance",
             "Production",
             40,
-            "Barricades, a fire extinguisher point, a first-aid corner, and a written weather call.",
+            "Barricades, a fire extinguisher point, a first-aid corner, and a written weather "
+            "call.",
             "Safety lead",
             True,
         ),
@@ -1113,7 +1180,8 @@ def _community() -> Persona:
             "Outreach with the real entry plan",
             "People and outreach",
             14,
-            "Publish hours, the gate plan, and what is free. Correct the footfall if permission came back lower.",
+            "Publish hours, the gate plan, and what is free. Correct the footfall if permission "
+            "came back lower.",
             "Outreach lead",
             False,
         ),
@@ -1152,7 +1220,8 @@ def _community() -> Persona:
             "Emergency sprint",
             "start",
             0,
-            "If a permit or NOC is required and not filed, reduce footfall to a private meeting or move the date. Do not advertise a crowd you cannot host.",
+            "If a permit or NOC is required and not filed, reduce footfall to a private meeting or "
+            "move the date. Do not advertise a crowd you cannot host.",
             "Committee",
             True,
         ),
@@ -1162,7 +1231,8 @@ def _community() -> Persona:
             "Emergency sprint",
             "start",
             0,
-            "Pick a number the site can hold with water and a medical corner. Staff the gate to that number.",
+            "Pick a number the site can hold with water and a medical corner. Staff the gate to "
+            "that number.",
             "Committee",
             True,
         ),
@@ -1206,10 +1276,12 @@ def _community() -> Persona:
             60,
             0,
             (
-                "The permission names the footfall cap, the hours, and the site. Your poster cannot exceed it.",
+                "The permission names the footfall cap, the hours, and the site. Your poster "
+                "cannot exceed it.",
                 "Police intimation and a noise rule are attached before tickets or posts go out.",
             ),
-            "Fees belong in this line. A missing permission is a reason to shrink the event, not a reason to hope.",
+            "Fees belong in this line. A missing permission is a reason to shrink the event, not a "
+            "reason to hope.",
         ),
         VendorTemplate(
             "venue",
@@ -1258,7 +1330,8 @@ def _community() -> Persona:
             21,
             30,
             (
-                "Drinking water is free and staffed. Food stalls list allergens and take their waste back.",
+                "Drinking water is free and staffed. Food stalls list allergens and take their "
+                "waste back.",
             ),
             "Place water where queues already are, about every 80 metres in an open ground.",
         ),
@@ -1282,7 +1355,8 @@ def _community() -> Persona:
             14,
             50,
             (
-                "Signs include hours, the water point, the medical point, and the lost-person point.",
+                "Signs include hours, the water point, the medical point, and the lost-person "
+                "point.",
             ),
             "Do not print a footfall claim that the permission does not allow.",
         ),
@@ -1302,8 +1376,10 @@ def _community() -> Persona:
     ideas = (
         IdeaTemplate(
             "Staggered entry slots",
-            "Give the ground four arrival windows so the gate never holds the full footfall at once.",
-            "{city} sites fail at the gate, not on stage. A cap of {guests} people only works if they do not arrive together.",
+            "Give the ground four arrival windows so the gate never holds the full footfall at "
+            "once.",
+            "{city} sites fail at the gate, not on stage. A cap of {guests} people only works if "
+            "they do not arrive together.",
             "medium",
             ("indigo", "chalk", "signal yellow"),
             "A board at the gate that shows the current window and the water point.",
@@ -1313,7 +1389,8 @@ def _community() -> Persona:
         ),
         IdeaTemplate(
             "Sponsor the safety line in public",
-            "Put sponsor names on the water and medical corner, and publish what their money paid for.",
+            "Put sponsor names on the water and medical corner, and publish what their money paid "
+            "for.",
             "A community budget in {city} is easier to defend when safety is visibly funded.",
             "low",
             ("teal", "white", "charcoal"),
@@ -1323,7 +1400,8 @@ def _community() -> Persona:
         ),
         IdeaTemplate(
             "Three-hour volunteer shifts",
-            "Roster leads, a meal, and a radio channel. End the shift even if the person offers to stay.",
+            "Roster leads, a meal, and a radio channel. End the shift even if the person offers to "
+            "stay.",
             "{guests} people need calm marshals. Tired volunteers miss the lost-child call.",
             "medium",
             ("leaf", "sand", "navy"),
@@ -1333,11 +1411,14 @@ def _community() -> Persona:
         ),
         IdeaTemplate(
             "One stage, local sets",
-            "Book a shorter program of local performers and spend the cut on toilets, water, and shade.",
-            "An outdoor program in {city} is a heat and sound problem before it is a lineup problem.",
+            "Book a shorter program of local performers and spend the cut on toilets, water, and "
+            "shade.",
+            "An outdoor program in {city} is a heat and sound problem before it is a lineup "
+            "problem.",
             "low",
             ("earth", "white", "temple red"),
-            "Shaded seats near the stage reserved for elders and disabled guests, marked in the map.",
+            "Shaded seats near the stage reserved for elders and disabled guests, marked in the "
+            "map.",
             "End before dark if you do not have budget for a full lighting plot and a safe exit.",
             keywords=("folk", "cultural", "music", "performance"),
             settings=("outdoor",),
@@ -1363,7 +1444,8 @@ def _community() -> Persona:
         },
         tier_shift_notes={
             LocationTier.METRO: (
-                "A metro public event moves 2 points from outreach into safety and crowd management."
+                "A metro public event moves 2 points from outreach into safety and crowd "
+                "management."
             ),
         },
         age_shifts={},
@@ -1382,7 +1464,8 @@ def _community() -> Persona:
         vendors=vendors,
         ideas=ideas,
         system_brief=(
-            "You are planning a community event. Footfall, permission, water, and a way to stop the show "
+            "You are planning a community event. Footfall, permission, water, and a way to stop "
+            "the show "
             "come before programming. Do not suggest ticket scalping or unpermitted crowds."
         ),
     )

@@ -7,6 +7,8 @@ guest count so it is not a generic list.
 
 from __future__ import annotations
 
+from collections.abc import Iterable
+
 from src.domain.personas import IdeaTemplate, get_persona
 from src.domain.schemas import BudgetPlan, EventRequest, PersonalizedIdea, TimelinePlan
 
@@ -44,7 +46,7 @@ class PersonalizedIdeaEngine:
                 title=idea.title,
                 summary=_personalize(idea.summary, context),
                 why_it_fits=_personalize(idea.why_it_fits, context),
-                effort=idea.effort,  # type: ignore[arg-type]
+                effort=idea.effort,
                 palette=list(idea.palette),
                 signature_experience=idea.signature_experience,
                 sustainability_tip=idea.sustainability_tip,
@@ -111,11 +113,11 @@ def _personalize(template: str, context: dict[str, str]) -> str:
     return text
 
 
-def _unique(values: object) -> list[str]:
+def _unique(values: Iterable[str]) -> list[str]:
     """Preserve order while dropping empty and repeated tips."""
     seen: set[str] = set()
     result: list[str] = []
-    for value in values:  # type: ignore[union-attr]
+    for value in values:
         text = str(value).strip()
         if text and text not in seen:
             seen.add(text)

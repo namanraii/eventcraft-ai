@@ -46,11 +46,17 @@ def test_plan_endpoint_returns_every_section(client: TestClient) -> None:
 def test_schedule_mode_changes_with_the_date(client: TestClient) -> None:
     soon = client.post(
         "/api/v1/plan",
-        json=wedding_payload(event_date=(date.today() + timedelta(days=10)).isoformat(), guest_count=80),
+        json=wedding_payload(
+            event_date=(date.today() + timedelta(days=10)).isoformat(),
+            guest_count=80,
+        ),
     )
     mid = client.post(
         "/api/v1/plan",
-        json=wedding_payload(event_date=(date.today() + timedelta(days=40)).isoformat(), event_name="Forty day wedding"),
+        json=wedding_payload(
+            event_date=(date.today() + timedelta(days=40)).isoformat(),
+            event_name="Forty day wedding",
+        ),
     )
     assert soon.json()["timeline"]["mode"] == "emergency_sprint"
     assert mid.json()["timeline"]["mode"] == "compressed"

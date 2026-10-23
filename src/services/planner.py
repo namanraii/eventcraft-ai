@@ -7,14 +7,17 @@ A model failure leaves the deterministic plan intact.
 from __future__ import annotations
 
 import logging
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
+from typing import Literal
 
 from src.domain.personas import get_persona
 from src.domain.schemas import (
+    BudgetPlan,
     ChecklistPlan,
     CompleteEventPlan,
     EventRequest,
     PersonalizedIdea,
+    TimelinePlan,
     VendorChecklistItem,
     VendorClause,
 )
@@ -49,7 +52,7 @@ async def build_complete_plan(
     ideas, tips, note, assumptions = PersonalizedIdeaEngine().compose(request, budget, timeline)
     persona = get_persona(request.event_type)
     provider: str | None = None
-    decision_mode = "deterministic"
+    decision_mode: Literal["hybrid", "deterministic"] = "deterministic"
 
     enrichment = await _safe_enrich(orchestrator, request, budget, timeline, checklist)
     if enrichment is not None:
@@ -65,7 +68,8 @@ async def build_complete_plan(
             assumptions = [item for item in assumptions if not item.startswith("No model key")]
             assumptions.append(
                 "Creative ideas were drafted by the configured model. "
-                "Amounts, dates, and the checklist structure still come from the deterministic engines."
+                "Amounts, dates, and the checklist structure still come from the deterministic "
+                "engines."
             )
 
     return CompleteEventPlan(
@@ -75,8 +79,8 @@ async def build_complete_plan(
         persona_summary=persona.summary,
         city=request.city,
         location_tier=request.location_tier,
-        generated_at=datetime.now(timezone.utc),
-        decision_mode=decision_mode,  # type: ignore[arg-type]
+        generated_at=datetime.now(UTC),
+        decision_mode=decision_mode,
         provider=provider,
         budget=budget,
         timeline=timeline,
@@ -88,7 +92,13 @@ async def build_complete_plan(
     )
 
 
-async def _safe_enrich(orchestrator: LlmOrchestrator, request: EventRequest, budget, timeline, checklist):  # type: ignore[no-untyped-def]
+async def _safe_enrich(
+    orchestrator: LlmOrchestrator,
+    request: EventRequest,
+    budget: BudgetPlan,
+    timeline: TimelinePlan,
+    checklist: ChecklistPlan,
+) -> EnrichmentResult | None:
     """Call the orchestrator and swallow unexpected failures."""
     try:
         return await orchestrator.enrich(request, budget, timeline, checklist)
@@ -142,5 +152,6 @@ def _merge_clauses(checklist: ChecklistPlan, clauses: list[VendorClause]) -> Che
             if target == role or target in role or role in target:
                 if text not in item.contract_clauses and text not in extra:
                     extra.append(text)
-        updated.append(item.model_copy(update={"contract_clauses": (item.contract_clauses + extra)[:6]}))
+        clauses_now = (item.contract_clauses + extra)[:6]
+        updated.append(item.model_copy(update={"contract_clauses": clauses_now}))
     return checklist.model_copy(update={"items": updated})
