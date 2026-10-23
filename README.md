@@ -39,7 +39,7 @@ flowchart TD
   ideas --> merge
   merge --> model{Model key set?}
   model -->|no or call fails| rules[Rule ideas stay]
-  model -->|SpaceXAI, else Groq, else Gemini| enrich[Ideas and extra clauses only]
+  model -->|Groq, else SpaceXAI, else Gemini| enrich[Ideas and extra clauses only]
   rules --> plan[Complete plan]
   enrich --> plan
 ```
@@ -50,7 +50,7 @@ flowchart TD
 4. **TimelineMilestoneGenerator** counts the days remaining. Under 14 days it uses a 48-hour emergency sprint. Under 90 days it compresses the phase list and pulls missed critical tasks forward. Longer runways keep the full phase plan.
 5. **VendorChecklistManager** turns persona vendors into book-by dates. Optional rows such as mehendi appear only when the brief mentions them. A missed lead time is labeled as such.
 6. **PersonalizedIdeaEngine** scores the idea library against the brief. The city and guest count are written into the copy.
-7. **LlmOrchestrator** is optional. Provider order is SpaceXAI on the xAI API (`grok-4.7`), then Groq, then Gemini, all through one OpenAI-compatible HTTP client. The model receives the numbers as facts and a schema that has no money fields. User notes are wrapped as untrusted data.
+7. **LlmOrchestrator** is optional. Provider order is Groq (`openai/gpt-oss-120b`), then SpaceXAI on the xAI API (`grok-4.7`), then Gemini, all through one OpenAI-compatible HTTP client. The model receives the numbers as facts and a schema that has no money fields. User notes are wrapped as untrusted data.
 8. Identical briefs are stored in a SHA-256 LRU cache with a TTL, so a repeat does not call a model again.
 9. `POST /api/v1/rebalance-budget` refits one category. Critical lines keep more of what remains. The buffer cannot fall through its floor.
 
@@ -73,11 +73,11 @@ What-if rebalancing is the other decision. Raising decor does not mint new money
 
 | Criterion | Where to look |
 | --- | --- |
-| Code quality | `src/domain/`, `src/services/`, `src/api/`, `src/core/`. Pydantic v2 models, type annotations, Google-style docstrings, one responsibility per module. `pyproject.toml` holds the Ruff and pytest config. |
+| Code quality | `src/domain/`, `src/services/`, `src/api/`, `src/core/`. Pydantic v2 models, type annotations, Google-style docstrings, one responsibility per module. `pyproject.toml` holds the Ruff and pytest config, and `ruff check src tests main.py` is clean. |
 | Problem statement alignment | `BudgetAllocationEngine` in `src/services/budget_engine.py`, `TimelineMilestoneGenerator` in `src/services/timeline_engine.py`, `VendorChecklistManager` in `src/services/checklist_engine.py`, `PersonalizedIdeaEngine` in `src/services/idea_engine.py`. Persona rules live in `src/domain/personas.py`. |
-| Security | `src/core/security.py`: injection screen, tag stripping, token-bucket rate limit on `/api/` (the connection address is used, `X-Forwarded-For` is ignored), body-size cap, and response headers including CSP without `unsafe-inline`. Keys are read only from the environment. |
-| Efficiency | Deterministic math for money and dates. `src/core/cache.py` is a content-addressed LRU with TTL. Model calls are async, capped at 1,200 output tokens, and skipped entirely when no key is set. |
-| Testing | `tests/test_alignment.py`, `tests/test_security.py`, `tests/test_api.py`, `tests/test_efficiency.py`. The suite runs offline. A mocked model failure and a Groq fallback are covered. |
+| Security | `src/core/security.py`: injection screen after NFKC normalization and invisible-character stripping, tag stripping, token-bucket rate limit on `/api/` (the connection address is used, `X-Forwarded-For` is ignored), body-size cap, and response headers including CSP without `unsafe-inline`. Keys are read only from the environment. |
+| Efficiency | Deterministic math for money and dates. `src/core/cache.py` is a content-addressed LRU with TTL. Responses over 500 bytes are gzipped. Model calls are async, capped at 2,500 output tokens, and skipped entirely when no key is set. |
+| Testing | `tests/test_problem_statement.py`, `tests/test_alignment.py`, `tests/test_security.py`, `tests/test_api.py`, `tests/test_efficiency.py`, `tests/test_accessibility.py`. The suite runs offline. A mocked model failure and a Groq fallback are covered. |
 | Accessibility | `src/web/templates/index.html`, `src/web/static/css/styles.css`, `src/web/static/js/app.js`. Skip link, landmarks, labeled controls, radiogroup and tab keyboard patterns, native checkboxes, `aria-live` status, meter values with text, and ink-on-paper contrast above 7:1. Plan text is inserted with `textContent`. |
 
 ## Run it
@@ -130,8 +130,8 @@ Set at most the keys you have. The first one in this list is used; the next is t
 
 | Variable | Provider | Default model |
 | --- | --- | --- |
+| `GROQ_API_KEY` | Groq | `openai/gpt-oss-120b` |
 | `XAI_API_KEY` | SpaceXAI, via `https://api.x.ai/v1` | `grok-4.7` |
-| `GROQ_API_KEY` | Groq | `llama-3.3-70b-versatile` |
 | `GEMINI_API_KEY` | Gemini OpenAI-compatible endpoint | `gemini-2.5-flash` |
 
 Do not commit `.env`. The sample file is `.env.example`.
