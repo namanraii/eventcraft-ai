@@ -88,18 +88,20 @@ class EventRequest(BaseModel):
             raise ValueError("Event date must be within 3 years.")
         return value
 
-    @field_validator("guest_count", "total_budget")
+    @field_validator("guest_count", "total_budget", mode="before")
     @classmethod
-    def reject_bool_numbers(cls, value: int) -> int:
+    def reject_bool_numbers(cls, value: object) -> object:
         """Booleans are ints in Python. Refuse them so ``true`` is not a budget."""
         if isinstance(value, bool):
             raise ValueError("Numbers must be integers, not booleans.")
         return value
 
-    @field_validator("priorities")
+    @field_validator("priorities", mode="before")
     @classmethod
-    def priorities_are_scores(cls, value: dict[str, int]) -> dict[str, int]:
+    def priorities_are_scores(cls, value: object) -> dict[str, int]:
         """Accept only known-shaped keys and scores from 1 (low) to 5 (high)."""
+        if not isinstance(value, dict):
+            raise ValueError("Priorities must be a mapping of category keys to scores.")
         if len(value) > 12:
             raise ValueError("Provide at most 12 priority scores.")
         cleaned: dict[str, int] = {}
@@ -130,11 +132,11 @@ class RebalanceRequest(BaseModel):
     changed_category: str = Field(min_length=2, max_length=40)
     new_amount: int = Field(ge=0, le=100_000_000)
 
-    @field_validator("allocations")
+    @field_validator("allocations", mode="before")
     @classmethod
-    def allocations_are_rupees(cls, value: dict[str, int]) -> dict[str, int]:
+    def allocations_are_rupees(cls, value: object) -> dict[str, int]:
         """Reject negative lines and absurd key shapes."""
-        if not value or len(value) > 12:
+        if not isinstance(value, dict) or not value or len(value) > 12:
             raise ValueError("Allocations must include the plan categories.")
         for key, amount in value.items():
             if not _PRIORITY_KEY.fullmatch(key):

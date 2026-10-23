@@ -11,9 +11,10 @@ from __future__ import annotations
 import re
 import threading
 import time
+import unicodedata
 from collections.abc import Iterable
 
-from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
@@ -41,10 +42,19 @@ _INJECTION_PATTERNS: tuple[re.Pattern[str], ...] = (
     re.compile(r";\s*--"),
     re.compile(r"\bor\s+1\s*=\s*1\b", re.IGNORECASE),
     re.compile(r"<\?(php|=)", re.IGNORECASE),
+    re.compile(r"\b(reveal|print|show|dump)\b.{0,40}\b(system|hidden)\s+prompt\b", re.IGNORECASE),
+    re.compile(
+        r"\bdo\s+not\s+follow\s+(your|the|my)\s+(rules|instructions|prompt)\b",
+        re.IGNORECASE,
+    ),
+    re.compile(r"data\s*:\s*text/html", re.IGNORECASE),
+    re.compile(r"<\s*svg\b", re.IGNORECASE),
 )
 
 _TAG_PATTERN = re.compile(r"<[^>]*>")
 _CONTROL_CHARS = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f]")
+# Zero-width and bidi characters can hide a blocked phrase from a naive scan.
+_INVISIBLE = re.compile("[\u200b-\u200f\u202a-\u202e\u2060-\u2069\ufeff]")
 
 SCREENED_FIELDS: tuple[str, ...] = (
     "event_name",
@@ -93,11 +103,14 @@ def screen_text(value: str, field_name: str) -> str:
     """
     if not value:
         return ""
-    cleaned = _CONTROL_CHARS.sub("", value).strip()
+    cleaned = unicodedata.normalize("NFKC", value)
+    cleaned = _INVISIBLE.sub("", cleaned)
+    cleaned = _CONTROL_CHARS.sub("", cleaned).strip()
     for pattern in _INJECTION_PATTERNS:
         if pattern.search(cleaned):
             raise PromptInjectionError(
-                f"The field '{field_name}' contains instructions or markup the planner will not send on.",
+                f"The field '{field_name}' contains instructions or markup "
+                "the planner will not send on.",
                 details=[field_name],
             )
     without_tags = _TAG_PATTERN.sub("", cleaned)
@@ -243,7 +256,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
     lock a person out of the form.
     """
 
-    async def dispatch(self, request: Request, call_next) -> Response:  # type: ignore[no-untyped-def]
+    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         if not request.url.path.startswith("/api/"):
             return await call_next(request)
         client = request.client.host if request.client else "unknown"
@@ -255,7 +268,10 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                 content={
                     "error": {
                         "code": "rate_limited",
-                        "message": "Too many planning requests from this address. Wait a minute and try again.",
+                        "message": (
+                            "Too many planning requests from this address. "
+                            "Wait a minute and try again."
+                        ),
                         "details": [],
                     }
                 },
