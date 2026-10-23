@@ -17,7 +17,6 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-
 from src.api.routes import error_response, router
 from src.core.cache import ResponseCache
 from src.core.config import Settings, get_settings
@@ -29,6 +28,7 @@ from src.core.security import (
     TokenBucketLimiter,
 )
 from src.services.llm_orchestrator import LlmOrchestrator
+from starlette.middleware.gzip import GZipMiddleware
 
 logger = logging.getLogger(__name__)
 
@@ -53,7 +53,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
-        app.state.http = httpx.AsyncClient(timeout=httpx.Timeout(20.0, connect=5.0))
+        app.state.http = httpx.AsyncClient(timeout=httpx.Timeout(45.0, connect=5.0))
         app.state.orchestrator = LlmOrchestrator(app.state.settings, app.state.http)
         try:
             yield
@@ -75,6 +75,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.add_middleware(RateLimitMiddleware)
     app.add_middleware(BodySizeLimitMiddleware, max_bytes=settings.max_body_bytes)
     app.add_middleware(SecurityHeadersMiddleware)
+    app.add_middleware(GZipMiddleware, minimum_size=500)
 
     app.include_router(router)
     app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
