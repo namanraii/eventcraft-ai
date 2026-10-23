@@ -7,7 +7,6 @@ import json
 from datetime import date, timedelta
 
 import httpx
-
 from src.core.config import Settings
 from src.domain.personas import PERSONAS
 from src.domain.schemas import EventRequest
@@ -17,6 +16,7 @@ from src.services.idea_engine import PersonalizedIdeaEngine
 from src.services.llm_orchestrator import LlmOrchestrator
 from src.services.planner import build_complete_plan
 from src.services.timeline_engine import TimelineMilestoneGenerator
+
 from tests.conftest import wedding_payload
 
 
@@ -166,7 +166,8 @@ def test_community_checklist_includes_permission_and_mehendi_is_conditional() ->
     )
     roles = [item.vendor_role for item in community.items]
     assert any("permit" in role.lower() or "NOC" in role for role in roles)
-    plain = VendorChecklistManager().build(_request(cultural_preferences="A short ceremony at home"))
+    plain = VendorChecklistManager().build(_request(cultural_preferences="A short ceremony at "
+        "home"))
     assert all("Mehendi" not in item.vendor_role for item in plain.items)
     with_mehendi = VendorChecklistManager().build(
         _request(cultural_preferences="Mehendi in the morning and a short sangeet")
@@ -239,13 +240,19 @@ def test_model_ideas_do_not_replace_the_budget() -> None:
         "sustainability_tips": ["Skip foam flowers."],
     }
 
+    seen: list[str] = []
+
     def handler(request: httpx.Request) -> httpx.Response:
-        if request.url.host == "api.x.ai":
+        seen.append(request.url.host)
+        if request.url.host == "api.groq.com":
             return httpx.Response(500, json={"error": "down"})
         body = json.loads(request.content.decode())
         assert "<untrusted_user_notes>" in body["messages"][1]["content"]
         assert "INR" in body["messages"][1]["content"]
-        return httpx.Response(200, json={"choices": [{"message": {"content": json.dumps(enrichment)}}]})
+        return httpx.Response(
+            200,
+            json={"choices": [{"message": {"content": json.dumps(enrichment)}}]},
+        )
 
     async def run() -> None:
         transport = httpx.MockTransport(handler)
@@ -258,8 +265,9 @@ def test_model_ideas_do_not_replace_the_budget() -> None:
             after_amounts = {line.key: line.amount for line in plan.budget.lines}
             before_amounts = {line.key: line.amount for line in before.lines}
             assert after_amounts == before_amounts
+            assert seen == ["api.groq.com", "api.x.ai"]
             assert plan.decision_mode == "hybrid"
-            assert plan.provider == "groq"
+            assert plan.provider == "spacexai"
             assert plan.ideas[0].source == "model"
             caterer = next(item for item in plan.checklist.items if item.vendor_role == "Caterer")
             assert any("separate pans" in clause for clause in caterer.contract_clauses)

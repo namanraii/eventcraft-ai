@@ -27,7 +27,7 @@ class Settings(BaseSettings):
     xai_base_url: str = "https://api.x.ai/v1"
 
     groq_api_key: str = ""
-    groq_model: str = "llama-3.3-70b-versatile"
+    groq_model: str = "openai/gpt-oss-120b"
     groq_base_url: str = "https://api.groq.com/openai/v1"
 
     gemini_api_key: str = ""
@@ -42,13 +42,13 @@ class Settings(BaseSettings):
     def active_provider_name(self) -> str | None:
         """Return the first configured model provider, if any.
 
-        SpaceXAI (the xAI API) is preferred. Groq and Gemini are optional
-        fallbacks. An empty string means the deterministic engines run alone.
+        Groq is preferred. SpaceXAI and Gemini are optional fallbacks.
+        An empty string means the deterministic engines run alone.
         """
-        if self.xai_api_key.strip():
-            return "spacexai"
         if self.groq_api_key.strip():
             return "groq"
+        if self.xai_api_key.strip():
+            return "spacexai"
         if self.gemini_api_key.strip():
             return "gemini"
         return None
