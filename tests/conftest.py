@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from datetime import date, timedelta
 
 import pytest
@@ -33,7 +34,7 @@ def wedding_payload(**overrides: object) -> dict[str, object]:
 
 
 @pytest.fixture
-def client() -> TestClient:
+def client() -> Iterator[TestClient]:
     """Return a client whose lifespan, cache, and limiter are isolated."""
     settings = Settings(
         xai_api_key="",

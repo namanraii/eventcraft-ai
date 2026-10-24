@@ -17,7 +17,13 @@ from src.core.security import (
     screen_text,
 )
 from src.domain.personas import get_persona
-from src.domain.schemas import EventRequest, LocationTier, RebalanceRequest, VendorClause
+from src.domain.schemas import (
+    EventRequest,
+    EventVertical,
+    LocationTier,
+    RebalanceRequest,
+    VendorClause,
+)
 from src.services.budget_engine import (
     BudgetAllocationEngine,
     _apply_shift,
@@ -91,7 +97,7 @@ def test_schema_rejects_dates_priorities_and_allocations() -> None:
         EventRequest.model_validate(wedding_payload(priorities="no"))
     with pytest.raises(ValidationError):
         RebalanceRequest(
-            event_type="wedding",
+            event_type=EventVertical.WEDDING,
             total_budget=1_800_000,
             guest_count=250,
             location_tier=LocationTier.METRO,
@@ -101,7 +107,7 @@ def test_schema_rejects_dates_priorities_and_allocations() -> None:
         )
     with pytest.raises(ValidationError):
         RebalanceRequest(
-            event_type="wedding",
+            event_type=EventVertical.WEDDING,
             total_budget=1_800_000,
             guest_count=250,
             location_tier=LocationTier.METRO,
@@ -111,7 +117,7 @@ def test_schema_rejects_dates_priorities_and_allocations() -> None:
         )
     with pytest.raises(ValidationError):
         RebalanceRequest(
-            event_type="wedding",
+            event_type=EventVertical.WEDDING,
             total_budget=1_800_000,
             guest_count=250,
             location_tier=LocationTier.METRO,
@@ -162,7 +168,7 @@ def test_rebalance_buffer_and_an_unknown_category() -> None:
     allocations = {line.key: line.amount for line in original.lines}
     low = engine.rebalance(
         RebalanceRequest(
-            event_type="wedding",
+            event_type=EventVertical.WEDDING,
             total_budget=1_800_000,
             guest_count=250,
             location_tier=LocationTier.METRO,
@@ -174,7 +180,7 @@ def test_rebalance_buffer_and_an_unknown_category() -> None:
     assert any("buffer" in warning.lower() for warning in low.warnings)
     huge = engine.rebalance(
         RebalanceRequest(
-            event_type="wedding",
+            event_type=EventVertical.WEDDING,
             total_budget=1_800_000,
             guest_count=250,
             location_tier=LocationTier.METRO,
@@ -186,7 +192,7 @@ def test_rebalance_buffer_and_an_unknown_category() -> None:
     assert sum(line.amount for line in huge.lines) == 1_800_000
     same = engine.rebalance(
         RebalanceRequest(
-            event_type="wedding",
+            event_type=EventVertical.WEDDING,
             total_budget=1_800_000,
             guest_count=250,
             location_tier=LocationTier.METRO,
@@ -201,7 +207,7 @@ def test_rebalance_buffer_and_an_unknown_category() -> None:
     with pytest.raises(Exception, match="does not match"):
         engine.rebalance(
             RebalanceRequest(
-                event_type="wedding",
+                event_type=EventVertical.WEDDING,
                 total_budget=1_800_000,
                 guest_count=250,
                 location_tier=LocationTier.METRO,
@@ -213,7 +219,7 @@ def test_rebalance_buffer_and_an_unknown_category() -> None:
     with pytest.raises(Exception, match="not part"):
         engine.rebalance(
             RebalanceRequest(
-                event_type="wedding",
+                event_type=EventVertical.WEDDING,
                 total_budget=1_800_000,
                 guest_count=250,
                 location_tier=LocationTier.METRO,
@@ -227,7 +233,7 @@ def test_rebalance_buffer_and_an_unknown_category() -> None:
     with pytest.raises(Exception, match="add up"):
         engine.rebalance(
             RebalanceRequest(
-                event_type="wedding",
+                event_type=EventVertical.WEDDING,
                 total_budget=1_800_000,
                 guest_count=250,
                 location_tier=LocationTier.METRO,

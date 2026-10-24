@@ -9,11 +9,17 @@ from datetime import date, timedelta
 import httpx
 from src.core.config import Settings
 from src.domain.personas import PERSONAS
-from src.domain.schemas import EventRequest
+from src.domain.schemas import (
+    BudgetPlan,
+    ChecklistPlan,
+    EventRequest,
+    EventVertical,
+    TimelinePlan,
+)
 from src.services.budget_engine import BudgetAllocationEngine, split_amount
 from src.services.checklist_engine import VendorChecklistManager
 from src.services.idea_engine import PersonalizedIdeaEngine
-from src.services.llm_orchestrator import LlmOrchestrator
+from src.services.llm_orchestrator import EnrichmentResult, LlmOrchestrator
 from src.services.planner import build_complete_plan
 from src.services.timeline_engine import TimelineMilestoneGenerator
 
@@ -21,7 +27,7 @@ from tests.conftest import wedding_payload
 
 
 def _request(**overrides: object) -> EventRequest:
-    return EventRequest(**wedding_payload(**overrides))
+    return EventRequest.model_validate(wedding_payload(**overrides))
 
 
 def test_persona_baselines_sum_to_one() -> None:
@@ -103,7 +109,7 @@ def test_rebalance_keeps_the_total_and_the_buffer_floor() -> None:
 
     moved = engine.rebalance(
         RebalanceRequest(
-            event_type="wedding",
+            event_type=EventVertical.WEDDING,
             total_budget=1_800_000,
             guest_count=250,
             location_tier=LocationTier.METRO,
@@ -126,7 +132,7 @@ def test_rebalance_caps_a_category_that_would_erase_the_buffer() -> None:
 
     moved = engine.rebalance(
         RebalanceRequest(
-            event_type="wedding",
+            event_type=EventVertical.WEDDING,
             total_budget=1_800_000,
             guest_count=250,
             location_tier=LocationTier.METRO,
@@ -202,7 +208,13 @@ def test_ideas_name_the_city_without_a_model() -> None:
 
 def test_model_failure_still_returns_a_full_plan() -> None:
     class Exploding:
-        async def enrich(self, *_args: object, **_kwargs: object) -> None:
+        async def enrich(
+            self,
+            request: EventRequest,
+            budget: BudgetPlan,
+            timeline: TimelinePlan,
+            checklist: ChecklistPlan,
+        ) -> EnrichmentResult | None:
             raise RuntimeError("provider down")
 
     plan = asyncio.run(build_complete_plan(_request(), Exploding()))

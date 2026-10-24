@@ -80,6 +80,9 @@ def test_security_headers_and_oversized_body(client: TestClient) -> None:
     assert page.headers["X-Frame-Options"] == "DENY"
     assert "default-src 'self'" in page.headers["Content-Security-Policy"]
     assert "unsafe-inline" not in page.headers["Content-Security-Policy"]
+    assert page.headers["Cross-Origin-Opener-Policy"] == "same-origin"
+    assert page.headers["Cross-Origin-Resource-Policy"] == "same-origin"
+    assert page.headers["Strict-Transport-Security"].startswith("max-age=")
 
     oversized = client.post(
         "/api/v1/plan",

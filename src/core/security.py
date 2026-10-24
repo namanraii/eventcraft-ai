@@ -72,6 +72,9 @@ SECURITY_HEADERS: dict[str, str] = {
     "Referrer-Policy": "strict-origin-when-cross-origin",
     "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
     "X-Permitted-Cross-Domain-Policies": "none",
+    "Cross-Origin-Opener-Policy": "same-origin",
+    "Cross-Origin-Resource-Policy": "same-origin",
+    "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
     "Content-Security-Policy": (
         "default-src 'self'; "
         "script-src 'self'; "
@@ -262,6 +265,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         client = request.client.host if request.client else "unknown"
         limiter: TokenBucketLimiter = request.app.state.limiter
         allowed, remaining = limiter.allow(client)
+        response: Response
         if not allowed:
             response = JSONResponse(
                 status_code=429,

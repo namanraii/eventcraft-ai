@@ -7,7 +7,7 @@ from datetime import date, timedelta
 
 from fastapi.testclient import TestClient
 from src.core.cache import ResponseCache, plan_cache_key
-from src.domain.schemas import EventRequest
+from src.domain.schemas import EventRequest, EventVertical, LocationTier, Setting
 from src.services.budget_engine import BudgetAllocationEngine
 from src.services.checklist_engine import VendorChecklistManager
 from src.services.idea_engine import PersonalizedIdeaEngine
@@ -48,15 +48,15 @@ def test_lru_eviction(monkeypatch) -> None:
 
 def test_one_hundred_local_plans_stay_under_half_a_second() -> None:
     request = EventRequest(
-        event_type="wedding",
+        event_type=EventVertical.WEDDING,
         event_name="Meera and Arjun",
         host_names="Meera and Arjun",
         total_budget=1_800_000,
         guest_count=250,
         event_date=date.today() + timedelta(days=240),
-        location_tier="destination",
+        location_tier=LocationTier.DESTINATION,
         city="Jaipur",
-        setting="outdoor",
+        setting=Setting.OUTDOOR,
     )
     started = time.perf_counter()
     for _ in range(100):

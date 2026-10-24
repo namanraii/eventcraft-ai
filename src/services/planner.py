@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import logging
 from datetime import UTC, date, datetime
-from typing import Literal
+from typing import Literal, Protocol
 
 from src.domain.personas import get_persona
 from src.domain.schemas import (
@@ -24,15 +24,28 @@ from src.domain.schemas import (
 from src.services.budget_engine import BudgetAllocationEngine
 from src.services.checklist_engine import VendorChecklistManager
 from src.services.idea_engine import PersonalizedIdeaEngine
-from src.services.llm_orchestrator import EnrichmentResult, LlmOrchestrator
+from src.services.llm_orchestrator import EnrichmentResult
 from src.services.timeline_engine import TimelineMilestoneGenerator
 
 logger = logging.getLogger(__name__)
 
 
+class PlanEnricher(Protocol):
+    """The orchestrator method the planner is allowed to call."""
+
+    async def enrich(
+        self,
+        request: EventRequest,
+        budget: BudgetPlan,
+        timeline: TimelinePlan,
+        checklist: ChecklistPlan,
+    ) -> EnrichmentResult | None:
+        """Return model copy, or None when every provider fails."""
+
+
 async def build_complete_plan(
     request: EventRequest,
-    orchestrator: LlmOrchestrator,
+    orchestrator: PlanEnricher,
     today: date | None = None,
 ) -> CompleteEventPlan:
     """Run every engine and return one plan document.
@@ -93,7 +106,7 @@ async def build_complete_plan(
 
 
 async def _safe_enrich(
-    orchestrator: LlmOrchestrator,
+    orchestrator: PlanEnricher,
     request: EventRequest,
     budget: BudgetPlan,
     timeline: TimelinePlan,
