@@ -14,6 +14,8 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from src.domain.bounds import PAST_DATE_GRACE_DAYS, PLANNING_HORIZON_DAYS
+
 _PRIORITY_KEY = re.compile(r"^[a-z][a-z0-9_]{1,40}$")
 
 
@@ -82,9 +84,9 @@ class EventRequest(BaseModel):
     def date_is_in_window(cls, value: date) -> date:
         """Keep planning dates inside a window the timeline can schedule."""
         today = date.today()
-        if value < today - timedelta(days=7):
+        if value < today - timedelta(days=PAST_DATE_GRACE_DAYS):
             raise ValueError("Event date is more than 7 days in the past.")
-        if value > today + timedelta(days=365 * 3):
+        if value > today + timedelta(days=PLANNING_HORIZON_DAYS):
             raise ValueError("Event date must be within 3 years.")
         return value
 

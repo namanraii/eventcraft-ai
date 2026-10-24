@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from datetime import date, timedelta
 
+from src.domain.bounds import DUE_SOON_DAYS
 from src.domain.personas import Priority, VendorTemplate, get_persona
 from src.domain.schemas import ChecklistPlan, EventRequest, VendorChecklistItem
 
@@ -25,6 +26,8 @@ class VendorChecklistManager:
 
         Returns:
             A checklist sorted by priority, then by the book-by date.
+            The free-text haystack is built once. Selection is one pass
+            over the persona's vendors, then an O(V log V) sort.
         """
         today = today or date.today()
         persona = get_persona(request.event_type)
@@ -71,7 +74,7 @@ def _score(vendor: VendorTemplate, event_date: date, today: date) -> VendorCheck
         hint = "Lead time has passed. Call today and ask what can still be delivered."
         if priority in {"high", "medium"}:
             priority = "critical"
-    elif book_by <= today + timedelta(days=7):
+    elif book_by <= today + timedelta(days=DUE_SOON_DAYS):
         hint = "Book this week. Ask for the deposit terms before you hold the date."
     else:
         hint = f"On track if you book by {book_by.strftime('%d %b %Y')}."

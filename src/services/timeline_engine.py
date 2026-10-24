@@ -10,6 +10,14 @@ from __future__ import annotations
 from datetime import date, timedelta
 from typing import Literal
 
+from src.domain.bounds import (
+    COMMUNITY_PERMIT_DAYS,
+    COMPRESS_GRACE_DAYS,
+    COMPRESSED_RUNWAY_DAYS,
+    DUE_SOON_DAYS,
+    EMERGENCY_RUNWAY_DAYS,
+    WEDDING_SHORT_RUNWAY_DAYS,
+)
 from src.domain.personas import EmergencyTemplate, MilestoneTemplate, get_persona
 from src.domain.schemas import EventRequest, TimelineMilestone, TimelinePlan
 
@@ -30,7 +38,8 @@ class TimelineMilestoneGenerator:
 
         Returns:
             A timeline sorted by due date. Status is overdue, due soon,
-            scheduled, or event day.
+            scheduled, or event day. Phase names are collected in first-seen
+            order with one pass over the milestones.
         """
         today = today or date.today()
         persona = get_persona(request.event_type)
@@ -38,7 +47,7 @@ class TimelineMilestoneGenerator:
         warnings: list[str] = []
 
         mode: TimelineMode
-        if days_remaining < 14:
+        if days_remaining < EMERGENCY_RUNWAY_DAYS:
             mode = "emergency_sprint"
             milestones = [
                 _from_emergency(template, today, request.event_date)
@@ -48,7 +57,7 @@ class TimelineMilestoneGenerator:
                 f"Emergency sprint: {max(days_remaining, 0)} days left. "
                 "Booking is collapsed into 48-hour windows."
             )
-        elif days_remaining < 90:
+        elif days_remaining < COMPRESSED_RUNWAY_DAYS:
             mode = "compressed"
             milestones = _compress(persona.milestones, today, request.event_date, days_remaining)
             headline = (
@@ -69,21 +78,18 @@ class TimelineMilestoneGenerator:
 
         if days_remaining < 0:
             warnings.append("This date is in the past. The list shows what is already late.")
-        if request.event_type.value == "community" and days_remaining < 21:
+        if request.event_type.value == "community" and days_remaining < COMMUNITY_PERMIT_DAYS:
             warnings.append(
                 "Public permission often needs several weeks. If an NOC is not already filed, "
                 "shrink the footfall or move the date before you announce the event."
             )
-        if request.event_type.value == "wedding" and days_remaining < 30:
+        if request.event_type.value == "wedding" and days_remaining < WEDDING_SHORT_RUNWAY_DAYS:
             warnings.append(
                 "A wedding inside 30 days cannot keep every ritual. The sprint keeps the ceremony, "
                 "the meal, and a cue sheet."
             )
 
-        phases: list[str] = []
-        for milestone in milestones:
-            if milestone.phase not in phases:
-                phases.append(milestone.phase)
+        phases = list(dict.fromkeys(milestone.phase for milestone in milestones))
         return TimelinePlan(
             event_date=request.event_date,
             days_remaining=days_remaining,
@@ -101,7 +107,7 @@ def _status(due: date, today: date, event_date: date) -> MilestoneStatus:
         return "event_day"
     if due < today:
         return "overdue"
-    if due <= today + timedelta(days=7):
+    if due <= today + timedelta(days=DUE_SOON_DAYS):
         return "due_soon"
     return "scheduled"
 
@@ -166,7 +172,7 @@ def _compress(
     fitting: list[TimelineMilestone] = []
     late: list[MilestoneTemplate] = []
     for template in templates:
-        if template.days_before_event <= days_remaining + 3:
+        if template.days_before_event <= days_remaining + COMPRESS_GRACE_DAYS:
             fitting.append(_from_phased(template, today, event_date))
         elif template.critical:
             late.append(template)

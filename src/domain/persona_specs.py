@@ -5,7 +5,7 @@ The vertical modules hold the rule tables. Engines only read these objects.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Literal
 
 from src.domain.schemas import AgeGroup, EventVertical, LocationTier, Setting
@@ -110,11 +110,28 @@ class Persona:
     vendors: tuple[VendorTemplate, ...]
     ideas: tuple[IdeaTemplate, ...]
     system_brief: str
+    _by_key: dict[str, CategorySpec] = field(
+        default_factory=dict,
+        init=False,
+        compare=False,
+        repr=False,
+    )
+
+    def __post_init__(self) -> None:
+        """Index categories once. Later lookups do not scan the table."""
+        index: dict[str, CategorySpec] = {}
+        for item in self.categories:
+            index.setdefault(item.key, item)
+        object.__setattr__(self, "_by_key", index)
 
     def category(self, key: str) -> CategorySpec:
-        """Return one category specification by key."""
-        for item in self.categories:
-            if item.key == key:
-                return item
-        raise KeyError(key)
+        """Return one category specification by key.
 
+        The index is built at construction, so this is one dictionary read.
+        A missing key still raises ``KeyError``. The first category wins when
+        a key is repeated.
+        """
+        found = self._by_key.get(key)
+        if found is None:
+            raise KeyError(key)
+        return found

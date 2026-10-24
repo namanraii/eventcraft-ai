@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 
+from src.core.money import group_digits
 from src.domain.personas import IdeaTemplate, get_persona
 from src.domain.schemas import BudgetPlan, EventRequest, PersonalizedIdea, TimelinePlan
 
@@ -33,9 +34,10 @@ class PersonalizedIdeaEngine:
             Ideas, sustainability tips, the planner note, and assumptions.
         """
         persona = get_persona(request.event_type)
+        brief = _brief_text(request)
         ranked = sorted(
             persona.ideas,
-            key=lambda idea: _score(idea, request),
+            key=lambda idea: _score(idea, request, brief),
             reverse=True,
         )
         chosen = ranked[:3]
@@ -60,7 +62,7 @@ class PersonalizedIdeaEngine:
         note = (
             f"{persona.name} built this for {request.event_name} in {request.city}: "
             f"{timeline.days_remaining} days out ({timeline.mode.replace('_', ' ')}), "
-            f"₹{_group(budget.total_budget)} for {request.guest_count} guests. "
+            f"₹{group_digits(budget.total_budget)} for {request.guest_count} guests. "
             "The amounts and dates were calculated in code."
         )
         assumptions = [
@@ -73,10 +75,9 @@ class PersonalizedIdeaEngine:
         return ideas, tips[:5], note, assumptions
 
 
-def _score(idea: IdeaTemplate, request: EventRequest) -> int:
-    """Score a template against the brief. Ties keep the library order."""
-    score = 1
-    blob = " ".join(
+def _brief_text(request: EventRequest) -> str:
+    """Lowercase the free-text fields once per request."""
+    return " ".join(
         (
             request.vibe,
             request.cultural_preferences,
@@ -85,7 +86,16 @@ def _score(idea: IdeaTemplate, request: EventRequest) -> int:
             request.event_name,
         )
     ).lower()
-    if any(keyword in blob for keyword in idea.keywords):
+
+
+def _score(idea: IdeaTemplate, request: EventRequest, brief: str) -> int:
+    """Score one template. Ties keep the library order because ``sorted`` is stable.
+
+    Keyword checks read the brief that ``compose`` already built, so the
+    free-text fields are not joined again for every idea.
+    """
+    score = 1
+    if any(keyword in brief for keyword in idea.keywords):
         score += 3
     if request.age_group is not None and request.age_group.value in idea.age_groups:
         score += 3
@@ -127,12 +137,4 @@ def _unique(values: Iterable[str]) -> list[str]:
 
 def _group(amount: int) -> str:
     """Format rupees with Indian digit grouping."""
-    text = str(abs(amount))
-    if len(text) <= 3:
-        return text
-    head, tail = text[:-3], text[-3:]
-    groups: list[str] = []
-    while head:
-        groups.append(head[-2:])
-        head = head[:-2]
-    return ",".join(reversed(groups)) + "," + tail
+    return group_digits(amount)
