@@ -17,6 +17,8 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from starlette.middleware.gzip import GZipMiddleware
+
 from src.api.routes import error_response, router
 from src.core.cache import ResponseCache
 from src.core.config import Settings, get_settings
@@ -28,7 +30,6 @@ from src.core.security import (
     TokenBucketLimiter,
 )
 from src.services.llm_orchestrator import LlmOrchestrator
-from starlette.middleware.gzip import GZipMiddleware
 
 logger = logging.getLogger(__name__)
 
@@ -52,35 +53,38 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     templates = Jinja2Templates(directory=str(TEMPLATE_DIR))
 
     @asynccontextmanager
-    async def lifespan(app: FastAPI):
-        app.state.http = httpx.AsyncClient(timeout=httpx.Timeout(45.0, connect=5.0))
-        app.state.orchestrator = LlmOrchestrator(app.state.settings, app.state.http)
+    async def lifespan(application: FastAPI):
+        application.state.http = httpx.AsyncClient(timeout=httpx.Timeout(45.0, connect=5.0))
+        application.state.orchestrator = LlmOrchestrator(
+            application.state.settings,
+            application.state.http,
+        )
         try:
             yield
         finally:
-            await app.state.http.aclose()
+            await application.state.http.aclose()
 
-    app = FastAPI(
+    application = FastAPI(
         title=settings.app_name,
         version=settings.app_version,
         summary="Context-aware planner for weddings, birthdays, and community events.",
         lifespan=lifespan,
     )
-    app.state.settings = settings
-    app.state.cache = ResponseCache(settings.cache_max_entries, settings.cache_ttl_seconds)
-    app.state.limiter = TokenBucketLimiter(settings.rate_limit_per_minute)
+    application.state.settings = settings
+    application.state.cache = ResponseCache(settings.cache_max_entries, settings.cache_ttl_seconds)
+    application.state.limiter = TokenBucketLimiter(settings.rate_limit_per_minute)
 
     # The last middleware added is the outermost. Headers wrap every response,
     # including the 413 and 429 responses from the inner layers.
-    app.add_middleware(RateLimitMiddleware)
-    app.add_middleware(BodySizeLimitMiddleware, max_bytes=settings.max_body_bytes)
-    app.add_middleware(SecurityHeadersMiddleware)
-    app.add_middleware(GZipMiddleware, minimum_size=500)
+    application.add_middleware(RateLimitMiddleware)
+    application.add_middleware(BodySizeLimitMiddleware, max_bytes=settings.max_body_bytes)
+    application.add_middleware(SecurityHeadersMiddleware)
+    application.add_middleware(GZipMiddleware, minimum_size=500)
 
-    app.include_router(router)
-    app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+    application.include_router(router)
+    application.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
-    @app.get("/", include_in_schema=False)
+    @application.get("/", include_in_schema=False)
     def index(request: Request):
         """Serve the planner page."""
         return templates.TemplateResponse(
@@ -89,12 +93,14 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             context={"request": request, "app_version": settings.app_version},
         )
 
-    @app.exception_handler(EventCraftError)
+    @application.exception_handler(EventCraftError)
     async def handle_domain_error(_request: Request, exc: EventCraftError) -> JSONResponse:
+        """Map a domain error onto the planner's JSON error shape."""
         return error_response(exc)
 
-    @app.exception_handler(RequestValidationError)
+    @application.exception_handler(RequestValidationError)
     async def handle_validation(_request: Request, exc: RequestValidationError) -> JSONResponse:
+        """Map a schema failure onto the planner's JSON error shape."""
         details: list[str] = []
         for error in exc.errors()[:8]:
             location = ".".join(str(part) for part in error.get("loc", []) if part != "body")
@@ -111,7 +117,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             },
         )
 
-    return app
+    return application
 
 
 app = create_app()

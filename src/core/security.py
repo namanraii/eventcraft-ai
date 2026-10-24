@@ -206,6 +206,7 @@ class SecurityHeadersMiddleware:
         self.app = app
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        """Add the fixed security headers to an HTTP response."""
         if scope["type"] != "http":
             await self.app(scope, receive, send)
             return
@@ -232,6 +233,7 @@ class BodySizeLimitMiddleware:
         self.max_bytes = max_bytes
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        """Reject a write whose Content-Length is above the configured cap."""
         if scope["type"] != "http" or scope.get("method") not in {"POST", "PUT", "PATCH"}:
             await self.app(scope, receive, send)
             return
@@ -260,6 +262,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
     """
 
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
+        """Count ``/api/`` requests against the address that opened the connection."""
         if not request.url.path.startswith("/api/"):
             return await call_next(request)
         client = request.client.host if request.client else "unknown"

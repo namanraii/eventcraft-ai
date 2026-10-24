@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 from fastapi.testclient import TestClient
+
 from main import create_app
 from src.core.config import Settings
 from src.core.exceptions import PromptInjectionError
 from src.core.security import screen_text
-
 from tests.conftest import wedding_payload
 
 

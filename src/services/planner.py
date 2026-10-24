@@ -115,8 +115,13 @@ async def _safe_enrich(
     """Call the orchestrator and swallow unexpected failures."""
     try:
         return await orchestrator.enrich(request, budget, timeline, checklist)
-    except Exception:
-        logger.warning("Enrichment failed; the rule library will be used.")
+    except Exception as exc:  # pylint: disable=broad-exception-caught
+        # The engines have already built a complete plan. A provider or parser
+        # fault stays on the rule library instead of becoming a 500.
+        logger.warning(
+            "Enrichment failed (%s); the rule library will be used.",
+            type(exc).__name__,
+        )
         return None
 
 
@@ -144,9 +149,11 @@ def _ideas_from_model(enrichment: EnrichmentResult) -> list[PersonalizedIdea]:
 def _merge_tips(rule_tips: list[str], model_tips: list[str]) -> list[str]:
     """Prefer model tips, then fill with rule tips, capped at five."""
     merged: list[str] = []
+    seen: set[str] = set()
     for tip in list(model_tips) + list(rule_tips):
         text = tip.strip()
-        if text and text not in merged:
+        if text and text not in seen:
+            seen.add(text)
             merged.append(text)
     return merged[:5]
 
@@ -157,14 +164,15 @@ def _merge_clauses(checklist: ChecklistPlan, clauses: list[VendorClause]) -> Che
     for item in checklist.items:
         role = item.vendor_role.lower()
         extra: list[str] = []
+        seen = set(item.contract_clauses)
         for clause in clauses:
             target = clause.vendor_role.lower().strip()
             text = clause.clause.strip()[:240]
             if not text or not target:
                 continue
-            if target == role or target in role or role in target:
-                if text not in item.contract_clauses and text not in extra:
-                    extra.append(text)
+            if (target == role or target in role or role in target) and text not in seen:
+                extra.append(text)
+                seen.add(text)
         clauses_now = (item.contract_clauses + extra)[:6]
         updated.append(item.model_copy(update={"contract_clauses": clauses_now}))
     return checklist.model_copy(update={"items": updated})

@@ -9,6 +9,7 @@ from datetime import date, timedelta
 import httpx
 import pytest
 from pydantic import ValidationError
+
 from src.core.config import Settings
 from src.core.security import (
     TokenBucketLimiter,
@@ -39,7 +40,6 @@ from src.services.idea_engine import _group
 from src.services.llm_orchestrator import LlmOrchestrator, _message_text, _parse_enrichment
 from src.services.planner import _merge_clauses
 from src.services.timeline_engine import TimelineMilestoneGenerator, _dedupe
-
 from tests.conftest import wedding_payload
 from tests.test_alignment import _request
 

@@ -17,7 +17,7 @@ from typing import Any
 import httpx
 
 from src.core.config import Settings
-from src.domain.personas import get_persona
+from src.domain.personas import Persona, get_persona
 from src.domain.schemas import (
     BudgetPlan,
     ChecklistPlan,
@@ -131,14 +131,7 @@ class LlmOrchestrator:
         if not providers:
             return None
         persona = get_persona(request.event_type)
-        prompt = _user_prompt(
-            request,
-            budget,
-            timeline,
-            checklist,
-            persona.system_brief,
-            persona.name,
-        )
+        prompt = _user_prompt(request, budget, timeline, checklist, persona)
         schema = _strict_schema(LlmEnrichment)
         for provider in providers:
             try:
@@ -209,8 +202,7 @@ def _user_prompt(
     budget: BudgetPlan,
     timeline: TimelinePlan,
     checklist: ChecklistPlan,
-    system_brief: str,
-    persona_name: str,
+    persona: Persona,
 ) -> str:
     """Build a short prompt. User notes are fenced so they cannot be commands."""
     percents = ", ".join(f"{line.label} {line.percent:.1f}%" for line in budget.lines)
@@ -218,7 +210,7 @@ def _user_prompt(
     age = request.age_group.value if request.age_group else "not applicable"
     return "\n".join(
         [
-            f"Persona: {persona_name}. {system_brief}",
+            f"Persona: {persona.name}. {persona.system_brief}",
             (
                 f"Event: {request.event_name} ({request.event_type.value}) in {request.city} "
                 f"({request.location_tier.value}). Hosts: {request.host_names or 'not specified'}."

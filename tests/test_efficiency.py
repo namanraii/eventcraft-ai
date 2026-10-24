@@ -6,13 +6,13 @@ import time
 from datetime import date, timedelta
 
 from fastapi.testclient import TestClient
+
 from src.core.cache import ResponseCache, plan_cache_key
 from src.domain.schemas import EventRequest, EventVertical, LocationTier, Setting
 from src.services.budget_engine import BudgetAllocationEngine
 from src.services.checklist_engine import VendorChecklistManager
 from src.services.idea_engine import PersonalizedIdeaEngine
 from src.services.timeline_engine import TimelineMilestoneGenerator
-
 from tests.conftest import wedding_payload
 
 

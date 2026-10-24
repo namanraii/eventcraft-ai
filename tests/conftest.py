@@ -7,6 +7,7 @@ from datetime import date, timedelta
 
 import pytest
 from fastapi.testclient import TestClient
+
 from main import create_app
 from src.core.config import Settings
 

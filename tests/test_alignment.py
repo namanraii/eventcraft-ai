@@ -7,6 +7,7 @@ import json
 from datetime import date, timedelta
 
 import httpx
+
 from src.core.config import Settings
 from src.domain.personas import PERSONAS
 from src.domain.schemas import (
@@ -22,7 +23,6 @@ from src.services.idea_engine import PersonalizedIdeaEngine
 from src.services.llm_orchestrator import EnrichmentResult, LlmOrchestrator
 from src.services.planner import build_complete_plan
 from src.services.timeline_engine import TimelineMilestoneGenerator
-
 from tests.conftest import wedding_payload
 
 
