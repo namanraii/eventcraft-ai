@@ -58,6 +58,10 @@ def test_keyboard_patterns_are_in_the_script() -> None:
     assert "ArrowLeft" in JS
     assert 'role="tablist"' in HTML
     assert "aria-live" in HTML
+    assert 'aria-describedby="form-error"' in HTML
+    assert 'id="form-error" class="alert" role="alert" tabindex="-1"' in HTML
+    assert "aria-valuetext" in JS
+    assert 'setAttribute("aria-invalid", "true")' in JS
 
 
 def test_text_contrast_clears_seven_to_one() -> None:

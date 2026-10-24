@@ -281,10 +281,13 @@ function renderPriorities(values) {
     input.value = String(values[category.key] || 3);
     input.dataset.priority = category.key;
     input.setAttribute("aria-describedby", "priority-help");
+    input.setAttribute("aria-valuetext", PRIORITY_WORDS[input.value] || "Baseline");
     const output = el("output", { text: PRIORITY_WORDS[input.value] || "Baseline" });
     output.htmlFor = id;
     input.addEventListener("input", () => {
-      output.textContent = PRIORITY_WORDS[input.value] || "Baseline";
+      const word = PRIORITY_WORDS[input.value] || "Baseline";
+      output.textContent = word;
+      input.setAttribute("aria-valuetext", word);
     });
     const base = el("p", {
       className: "help",
@@ -736,12 +739,15 @@ function showError(message) {
   const node = document.getElementById("form-error");
   node.hidden = false;
   node.textContent = message;
+  document.getElementById("generate").setAttribute("aria-invalid", "true");
+  node.focus();
 }
 
 function hideError() {
   const node = document.getElementById("form-error");
   node.hidden = true;
   node.textContent = "";
+  document.getElementById("generate").removeAttribute("aria-invalid");
 }
 
 function announce(message) {
