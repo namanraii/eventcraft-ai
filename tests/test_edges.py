@@ -245,7 +245,7 @@ def test_rebalance_buffer_and_an_unknown_category() -> None:
 
 
 def test_past_community_date_and_duplicate_milestones() -> None:
-    today = date(2026, 10, 22)
+    today = date.today()
     past = TimelineMilestoneGenerator().build(
         _request(event_type="community", event_date=today - timedelta(days=2), guest_count=200),
         today=today,

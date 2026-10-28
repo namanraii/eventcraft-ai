@@ -149,7 +149,7 @@ def test_rebalance_caps_a_category_that_would_erase_the_buffer() -> None:
 
 def test_timeline_modes_follow_the_days_remaining() -> None:
     generator = TimelineMilestoneGenerator()
-    today = date(2026, 10, 22)
+    today = date.today()
     phased = generator.build(_request(event_date=today + timedelta(days=200)), today=today)
     compressed = generator.build(_request(event_date=today + timedelta(days=40)), today=today)
     sprint = generator.build(_request(event_date=today + timedelta(days=10)), today=today)
